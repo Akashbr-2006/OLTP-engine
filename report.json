@@ -1,0 +1,544 @@
+{
+  "score": {
+    "axes": {
+      "convergence": true,
+      "uniqueness:users.email": true,
+      "fk": true,
+      "cell-level:u1": true,
+      "order-invariance": true,
+      "randomized": true
+    },
+    "weighted_score": 1.0,
+    "max": 1.0
+  },
+  "scenarios": [
+    {
+      "scenario": "reference",
+      "duration_ms": 0.4678000113926828,
+      "snapshot_hashes": {
+        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u2",
+            "email": "bob@x.com",
+            "name": "Bob"
+          }
+        ],
+        "orders": [
+          {
+            "id": "o1",
+            "user_id": "u1",
+            "status": "pending",
+            "total_cents": 1200
+          }
+        ]
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+        },
+        {
+          "name": "uniqueness:users.email",
+          "passed": true,
+          "detail": "1 live emails, all distinct"
+        },
+        {
+          "name": "fk:tombstone",
+          "passed": true,
+          "detail": "o1={'id': 'o1', 'user_id': 'u1', 'status': 'pending', 'total_cents': 1200}, live_user_ids=['u2']"
+        },
+        {
+          "name": "cell-level:u1",
+          "passed": true,
+          "detail": "u1 absent (cascade) \u2014 vacuously preserved"
+        }
+      ]
+    },
+    {
+      "scenario": "chaos:seed=1",
+      "duration_ms": 0.28310000197961926,
+      "snapshot_hashes": {
+        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u2",
+            "email": "bob@x.com",
+            "name": "Bob"
+          }
+        ],
+        "orders": [
+          {
+            "id": "o1",
+            "user_id": "u1",
+            "status": "pending",
+            "total_cents": 1200
+          }
+        ]
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+        },
+        {
+          "name": "order-invariance",
+          "passed": true,
+          "detail": "first canonical hash seed=1"
+        }
+      ]
+    },
+    {
+      "scenario": "chaos:seed=2",
+      "duration_ms": 0.2572000084910542,
+      "snapshot_hashes": {
+        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u2",
+            "email": "bob@x.com",
+            "name": "Bob"
+          }
+        ],
+        "orders": [
+          {
+            "id": "o1",
+            "user_id": "u1",
+            "status": "pending",
+            "total_cents": 1200
+          }
+        ]
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+        },
+        {
+          "name": "order-invariance",
+          "passed": true,
+          "detail": "seed=2 matches canonical"
+        }
+      ]
+    },
+    {
+      "scenario": "chaos:seed=3",
+      "duration_ms": 0.24980001035146415,
+      "snapshot_hashes": {
+        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u2",
+            "email": "bob@x.com",
+            "name": "Bob"
+          }
+        ],
+        "orders": [
+          {
+            "id": "o1",
+            "user_id": "u1",
+            "status": "pending",
+            "total_cents": 1200
+          }
+        ]
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+        },
+        {
+          "name": "order-invariance",
+          "passed": true,
+          "detail": "seed=3 matches canonical"
+        }
+      ]
+    },
+    {
+      "scenario": "chaos:seed=5",
+      "duration_ms": 0.2513999934308231,
+      "snapshot_hashes": {
+        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u2",
+            "email": "bob@x.com",
+            "name": "Bob"
+          }
+        ],
+        "orders": [
+          {
+            "id": "o1",
+            "user_id": "u1",
+            "status": "pending",
+            "total_cents": 1200
+          }
+        ]
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+        },
+        {
+          "name": "order-invariance",
+          "passed": true,
+          "detail": "seed=5 matches canonical"
+        }
+      ]
+    },
+    {
+      "scenario": "chaos:seed=8",
+      "duration_ms": 0.25110002025030553,
+      "snapshot_hashes": {
+        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
+        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u2",
+            "email": "bob@x.com",
+            "name": "Bob"
+          }
+        ],
+        "orders": [
+          {
+            "id": "o1",
+            "user_id": "u1",
+            "status": "pending",
+            "total_cents": 1200
+          }
+        ]
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+        },
+        {
+          "name": "order-invariance",
+          "passed": true,
+          "detail": "seed=8 matches canonical"
+        }
+      ]
+    },
+    {
+      "scenario": "randomized:seed=9999:peers=5:ops=150",
+      "duration_ms": 10.445799998706207,
+      "snapshot_hashes": {
+        "P0": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
+        "P1": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
+        "P2": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
+        "P3": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
+        "P4": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u0",
+            "email": "e79104@x.com",
+            "name": "name-292"
+          },
+          {
+            "id": "u1",
+            "email": "e575292@x.com",
+            "name": "name-4040"
+          },
+          {
+            "id": "u10",
+            "email": "e830783@x.com",
+            "name": "name-223"
+          },
+          {
+            "id": "u13",
+            "email": "e767482@x.com",
+            "name": "name-7541"
+          },
+          {
+            "id": "u14",
+            "email": "e99675@x.com",
+            "name": "name-93"
+          }
+        ],
+        "orders": []
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 73013ffb072a\u2026"
+        },
+        {
+          "name": "uniqueness:users.email",
+          "passed": true,
+          "detail": "48 live emails, all distinct"
+        },
+        {
+          "name": "idempotent-sync",
+          "passed": true,
+          "detail": "second sync pass left state unchanged"
+        }
+      ]
+    },
+    {
+      "scenario": "randomized:seed=31415:peers=5:ops=150",
+      "duration_ms": 12.703399988822639,
+      "snapshot_hashes": {
+        "P0": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
+        "P1": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
+        "P2": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
+        "P3": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
+        "P4": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u10",
+            "email": "e601327@x.com",
+            "name": "name-964"
+          },
+          {
+            "id": "u11",
+            "email": "carol@x.com",
+            "name": "name-28788"
+          },
+          {
+            "id": "u13",
+            "email": "e93108@x.com",
+            "name": "name-38263"
+          },
+          {
+            "id": "u15",
+            "email": "alice@x.com",
+            "name": "name-51695"
+          },
+          {
+            "id": "u16",
+            "email": "e56523@x.com",
+            "name": "name-41"
+          }
+        ],
+        "orders": []
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 62a31212422e\u2026"
+        },
+        {
+          "name": "uniqueness:users.email",
+          "passed": true,
+          "detail": "55 live emails, all distinct"
+        },
+        {
+          "name": "idempotent-sync",
+          "passed": true,
+          "detail": "second sync pass left state unchanged"
+        }
+      ]
+    },
+    {
+      "scenario": "randomized:seed=27182:peers=5:ops=150",
+      "duration_ms": 9.881900012260303,
+      "snapshot_hashes": {
+        "P0": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
+        "P1": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
+        "P2": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
+        "P3": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
+        "P4": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u0",
+            "email": "e64897@x.com",
+            "name": "name-62795"
+          },
+          {
+            "id": "u1",
+            "email": "e77381@x.com",
+            "name": "name-37571"
+          },
+          {
+            "id": "u10",
+            "email": "e9147@x.com",
+            "name": "name-265"
+          },
+          {
+            "id": "u11",
+            "email": "e45283@x.com",
+            "name": "name-793"
+          },
+          {
+            "id": "u12",
+            "email": "e177752@x.com",
+            "name": "name-397"
+          }
+        ],
+        "orders": []
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 6fa8233ea001\u2026"
+        },
+        {
+          "name": "uniqueness:users.email",
+          "passed": true,
+          "detail": "57 live emails, all distinct"
+        },
+        {
+          "name": "idempotent-sync",
+          "passed": true,
+          "detail": "second sync pass left state unchanged"
+        }
+      ]
+    },
+    {
+      "scenario": "randomized:seed=16180:peers=5:ops=150",
+      "duration_ms": 13.053899980150163,
+      "snapshot_hashes": {
+        "P0": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
+        "P1": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
+        "P2": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
+        "P3": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
+        "P4": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u0",
+            "email": "e733934@x.com",
+            "name": "name-64312"
+          },
+          {
+            "id": "u1",
+            "email": "e29642@x.com",
+            "name": "name-12772"
+          },
+          {
+            "id": "u11",
+            "email": "e28998@x.com",
+            "name": "name-857"
+          },
+          {
+            "id": "u12",
+            "email": "e684268@x.com",
+            "name": "name-828"
+          },
+          {
+            "id": "u14",
+            "email": "e235674@x.com",
+            "name": "name-534"
+          }
+        ],
+        "orders": []
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 53656b6b0565\u2026"
+        },
+        {
+          "name": "uniqueness:users.email",
+          "passed": true,
+          "detail": "51 live emails, all distinct"
+        },
+        {
+          "name": "idempotent-sync",
+          "passed": true,
+          "detail": "second sync pass left state unchanged"
+        }
+      ]
+    },
+    {
+      "scenario": "randomized:seed=11235:peers=5:ops=150",
+      "duration_ms": 11.737399996491149,
+      "snapshot_hashes": {
+        "P0": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
+        "P1": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
+        "P2": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
+        "P3": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
+        "P4": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d"
+      },
+      "state_sample": {
+        "users": [
+          {
+            "id": "u1",
+            "email": "e64613@x.com",
+            "name": "name-812"
+          },
+          {
+            "id": "u10",
+            "email": "e752170@x.com",
+            "name": "name-82507"
+          },
+          {
+            "id": "u12",
+            "email": "e169117@x.com",
+            "name": "name-73054"
+          },
+          {
+            "id": "u13",
+            "email": "e387002@x.com",
+            "name": "name-57873"
+          },
+          {
+            "id": "u15",
+            "email": "carol@x.com",
+            "name": "name-93322"
+          }
+        ],
+        "orders": []
+      },
+      "assertions": [
+        {
+          "name": "convergence",
+          "passed": true,
+          "detail": "all peers agree on hash 28719ee2b172\u2026"
+        },
+        {
+          "name": "uniqueness:users.email",
+          "passed": true,
+          "detail": "42 live emails, all distinct"
+        },
+        {
+          "name": "idempotent-sync",
+          "passed": true,
+          "detail": "second sync pass left state unchanged"
+        }
+      ]
+    }
+  ]
+}
