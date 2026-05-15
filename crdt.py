@@ -1,115 +1,109 @@
+import collections
 from hlc import HLC
 
 class MVRegister:
-    """
-    Multi-Value Register (MV-Register).
-    Instead of overwriting on conflict, it preserves concurrent values.
-    This fixes the 'Degenerate LWW' critique.
-    """
-    def __init__(self, peer_id=None, value=None, hlc=None):
-        # Maps peer_id -> (value, hlc)
-        self.values = {}
-        if peer_id and hlc:
-            self.values[peer_id] = (value, hlc)
+    """Multi-Value Register: Preserves concurrent history at the cell level."""
+    def __init__(self):
+        self.variants = {} # peer_id -> (value, hlc)
+
+    def assign(self, peer_id, value, hlc):
+        if peer_id not in self.variants or hlc > self.variants[peer_id][1]:
+            self.variants[peer_id] = (value, hlc)
 
     def merge(self, other: 'MVRegister'):
-        """
-        Standard MV-Register merge. We keep the latest value for each peer.
-        If peer A and peer B have concurrent writes, both stay in the map.
-        """
-        for p_id, (val, hlc) in other.values.items():
-            if p_id not in self.values or hlc > self.values[p_id][1]:
-                self.values[p_id] = (val, hlc)
+        for p_id, (val, hlc) in other.variants.items():
+            if p_id not in self.variants or hlc > self.variants[p_id][1]:
+                self.variants[p_id] = (val, hlc)
 
     def resolve(self):
-        """
-        Deterministic winner selection for the view layer.
-        But importantly: the other data is still stored in self.values.
-        """
-        if not self.values:
-            return None
-        # Highest HLC wins the 'active' view
-        return max(self.values.values(), key=lambda x: x[1])[0]
-
-    def get_conflicts(self):
-        """Allows the UI/Judge to see that we didn't drop data."""
-        if len(self.values) <= 1:
-            return []
-        return [v[0] for v in self.values.values()]
+        if not self.variants: return None
+        # Deterministic winner based on lexicographical Peer ID
+        winner_peer = sorted(self.variants.keys())[0]
+        return self.variants[winner_peer][0]
 
 class ORSet:
     """
-    Observed-Remove Set.
-    Unchanged math, but essential for the Tombstone FK defense.
+    Observed-Remove Set (OR-Set).
+    Tracks existence with causal history by converting HLCs to hashable strings.
     """
     def __init__(self):
-        self.adds = {}    
-        self.removes = {} 
+        self.add_set = collections.defaultdict(set)
+        self.remove_set = collections.defaultdict(set)
 
-    def add(self, element: str, hlc: HLC):
-        if element not in self.adds or hlc > self.adds[element]:
-            self.adds[element] = hlc
+    def add(self, element, hlc):
+        # STR(HLC) makes it hashable for the Python set!
+        self.add_set[element].add(str(hlc))
 
-    def remove(self, element: str, hlc: HLC):
-        if element not in self.removes or hlc > self.removes[element]:
-            self.removes[element] = hlc
-
-    def contains(self, element: str) -> bool:
-        if element not in self.adds:
-            return False
-        if element in self.removes and self.removes[element] >= self.adds[element]:
-            return False
-        return True
+    def remove(self, element, hlc):
+        if element in self.add_set:
+            # Tombstone all current additions by capturing their string states
+            self.remove_set[element].update(self.add_set[element])
 
     def merge(self, other: 'ORSet'):
-        for elem, hlc in other.adds.items():
-            self.add(elem, hlc)
-        for elem, hlc in other.removes.items():
-            self.remove(elem, hlc)
+        for elem, hlcs in other.add_set.items():
+            self.add_set[elem].update(hlcs)
+        for elem, hlcs in other.remove_set.items():
+            self.remove_set[elem].update(hlcs)
+
+    def contains(self, element):
+        adds = self.add_set.get(element, set())
+        removes = self.remove_set.get(element, set())
+        # If there's an addition that hasn't been tombstoned by a removal
+        return any(a not in removes for a in adds)
 
 class EscrowLedger:
     """
     Two-Phase Reservation Protocol.
-    Fixed: Uses a non-recursive merge to prevent infinite sync loops.
+    Optimized for O(1) lookups to survive high-parameter chaos tests.
     """
     def __init__(self):
-        self.claims = {}    # Resource -> (peer_id, HLC)
-        self.conflicts = {} # Resource -> list of (peer_id, HLC)
+        # Maps: resource -> (peer_id, hlc_object)
+        self.claims = {}
+        # Maps: resource -> set of unique tuples (peer_id, hlc_string)
+        self.conflicts = collections.defaultdict(set)
 
     def claim(self, resource: str, peer_id: str, hlc: HLC):
-        if resource not in self.claims:
-            self.claims[resource] = (peer_id, hlc)
-        else:
+        peer_id_str = str(peer_id)
+        hlc_str = str(hlc)
+
+        # 1. IDEMPOTENCY GUARD: If we already hold this exact primary claim, exit
+        if resource in self.claims:
             curr_id, curr_hlc = self.claims[resource]
+            if str(curr_id) == peer_id_str and str(curr_hlc) == hlc_str:
+                return
             
-            # IDENTITY CHECK: If this is the exact same claim, STOP.
-            if curr_id == peer_id and curr_hlc == hlc:
+            # 2. FAST CONFLICT GUARD: O(1) set lookup instead of O(N) list scanning
+            if (peer_id_str, hlc_str) in self.conflicts[resource]:
                 return
 
+            # 3. TIE-BREAKER LOGIC
             if hlc < curr_hlc:
-                if resource not in self.conflicts: self.conflicts[resource] = []
-                # Check if this conflict is already known before adding
-                if (curr_id, curr_hlc) not in self.conflicts[resource]:
-                    self.conflicts[resource].append((curr_id, curr_hlc))
+                # The current winner moves down to the conflict set
+                self.conflicts[resource].add((str(curr_id), str(curr_hlc)))
                 self.claims[resource] = (peer_id, hlc)
-            elif hlc > curr_hlc:
-                if resource not in self.conflicts: self.conflicts[resource] = []
-                if (peer_id, hlc) not in self.conflicts[resource]:
-                    self.conflicts[resource].append((peer_id, hlc)) 
+            else:
+                # The incoming claim goes straight to the conflict set
+                self.conflicts[resource].add((peer_id_str, hlc_str))
+        else:
+            self.claims[resource] = (peer_id, hlc)
 
     def get_winner(self, resource: str):
         return self.claims.get(resource, (None, None))
 
     def merge(self, other: 'EscrowLedger'):
-        """
-        Dumb Union Merge: Prevents infinite loops by processing 
-        all claims and conflicts as a flat set.
-        """
-        # 1. Process all of 'other's primary claims
+        """Dumb Union Merge: Fully non-recursive."""
+        # Process other's primary winning claims
         for res, (p, h) in other.claims.items():
             self.claim(res, p, h)
         
-        # 2. Process all of 'other's recorded conflicts
-        for res, conflict_list in other.conflicts.items():
-            for (p, h) in conflict_list:
-                self.claim(res, p, h)
+        # Process other's recorded conflict sets safely and rapidly
+        for res, conflict_set in other.conflicts.items():
+            for p_id_str, h_str in conflict_set:
+                # Reconstruct a shadow comparison context if it isn't in conflicts yet
+                if (p_id_str, h_str) not in self.conflicts[res]:
+                    # If it's not the winner, add it to our local conflict set directly
+                    if res in self.claims:
+                        curr_id, curr_hlc = self.claims[res]
+                        if str(curr_id) == p_id_str and str(curr_hlc) == h_str:
+                            continue
+                    self.conflicts[res].add((p_id_str, h_str))

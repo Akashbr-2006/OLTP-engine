@@ -14,11 +14,11 @@
   "scenarios": [
     {
       "scenario": "reference",
-      "duration_ms": 1.794400013750419,
+      "duration_ms": 0.8483999990858138,
       "snapshot_hashes": {
-        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
+        "A": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "B": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "C": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6"
       },
       "state_sample": {
         "users": [
@@ -37,7 +37,7 @@
           {
             "id": "o1",
             "user_id": "u1",
-            "status": "pending",
+            "status": "pending (PARENT_TOMBSTONED)",
             "total_cents": 1200
           }
         ]
@@ -46,7 +46,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
+          "detail": "all peers agree on hash 673dd98fb1aa\u2026"
         },
         {
           "name": "uniqueness:users.email",
@@ -56,7 +56,7 @@
         {
           "name": "fk:tombstone",
           "passed": true,
-          "detail": "o1={'id': 'o1', 'user_id': 'u1', 'status': 'pending', 'total_cents': 1200}, live_user_ids=['u2', 'u3']"
+          "detail": "o1={'id': 'o1', 'user_id': 'u1', 'status': 'pending (PARENT_TOMBSTONED)', 'total_cents': 1200}, live_user_ids=['u2', 'u3']"
         },
         {
           "name": "cell-level:u1",
@@ -67,11 +67,11 @@
     },
     {
       "scenario": "chaos:seed=1",
-      "duration_ms": 1.5792000049259514,
+      "duration_ms": 1.0806999925989658,
       "snapshot_hashes": {
-        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
+        "A": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "B": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "C": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6"
       },
       "state_sample": {
         "users": [
@@ -90,7 +90,7 @@
           {
             "id": "o1",
             "user_id": "u1",
-            "status": "pending",
+            "status": "pending (PARENT_TOMBSTONED)",
             "total_cents": 1200
           }
         ]
@@ -99,7 +99,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
+          "detail": "all peers agree on hash 673dd98fb1aa\u2026"
         },
         {
           "name": "order-invariance",
@@ -110,11 +110,11 @@
     },
     {
       "scenario": "chaos:seed=2",
-      "duration_ms": 1.5822999994270504,
+      "duration_ms": 1.2387000024318695,
       "snapshot_hashes": {
-        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
+        "A": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "B": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "C": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6"
       },
       "state_sample": {
         "users": [
@@ -133,7 +133,7 @@
           {
             "id": "o1",
             "user_id": "u1",
-            "status": "pending",
+            "status": "pending (PARENT_TOMBSTONED)",
             "total_cents": 1200
           }
         ]
@@ -142,7 +142,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
+          "detail": "all peers agree on hash 673dd98fb1aa\u2026"
         },
         {
           "name": "order-invariance",
@@ -153,11 +153,11 @@
     },
     {
       "scenario": "chaos:seed=3",
-      "duration_ms": 1.847000006819144,
+      "duration_ms": 1.0263999865856022,
       "snapshot_hashes": {
-        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
+        "A": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "B": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "C": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6"
       },
       "state_sample": {
         "users": [
@@ -176,7 +176,7 @@
           {
             "id": "o1",
             "user_id": "u1",
-            "status": "pending",
+            "status": "pending (PARENT_TOMBSTONED)",
             "total_cents": 1200
           }
         ]
@@ -185,7 +185,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
+          "detail": "all peers agree on hash 673dd98fb1aa\u2026"
         },
         {
           "name": "order-invariance",
@@ -196,11 +196,11 @@
     },
     {
       "scenario": "chaos:seed=5",
-      "duration_ms": 1.5582999913021922,
+      "duration_ms": 0.666600011754781,
       "snapshot_hashes": {
-        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
+        "A": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "B": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "C": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6"
       },
       "state_sample": {
         "users": [
@@ -219,7 +219,7 @@
           {
             "id": "o1",
             "user_id": "u1",
-            "status": "pending",
+            "status": "pending (PARENT_TOMBSTONED)",
             "total_cents": 1200
           }
         ]
@@ -228,7 +228,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
+          "detail": "all peers agree on hash 673dd98fb1aa\u2026"
         },
         {
           "name": "order-invariance",
@@ -239,11 +239,11 @@
     },
     {
       "scenario": "chaos:seed=8",
-      "duration_ms": 1.5364999999292195,
+      "duration_ms": 0.6614000012632459,
       "snapshot_hashes": {
-        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
-        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
+        "A": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "B": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6",
+        "C": "673dd98fb1aa0f6c6cd196a221f1e2ce7a1059a862ad15b4ec668cb376adaab6"
       },
       "state_sample": {
         "users": [
@@ -262,7 +262,7 @@
           {
             "id": "o1",
             "user_id": "u1",
-            "status": "pending",
+            "status": "pending (PARENT_TOMBSTONED)",
             "total_cents": 1200
           }
         ]
@@ -271,7 +271,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
+          "detail": "all peers agree on hash 673dd98fb1aa\u2026"
         },
         {
           "name": "order-invariance",
@@ -282,7 +282,7 @@
     },
     {
       "scenario": "randomized:seed=9999:peers=5:ops=150",
-      "duration_ms": 83.9525000192225,
+      "duration_ms": 31.39210000517778,
       "snapshot_hashes": {
         "P0": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e",
         "P1": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e",
@@ -340,7 +340,7 @@
     },
     {
       "scenario": "randomized:seed=31415:peers=5:ops=150",
-      "duration_ms": 71.82020001346245,
+      "duration_ms": 32.41469999193214,
       "snapshot_hashes": {
         "P0": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798",
         "P1": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798",
@@ -398,7 +398,7 @@
     },
     {
       "scenario": "randomized:seed=27182:peers=5:ops=150",
-      "duration_ms": 49.11069999798201,
+      "duration_ms": 27.32069999910891,
       "snapshot_hashes": {
         "P0": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc",
         "P1": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc",
@@ -456,7 +456,7 @@
     },
     {
       "scenario": "randomized:seed=16180:peers=5:ops=150",
-      "duration_ms": 29.029900004388765,
+      "duration_ms": 31.47389998775907,
       "snapshot_hashes": {
         "P0": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2",
         "P1": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2",
@@ -514,7 +514,7 @@
     },
     {
       "scenario": "randomized:seed=11235:peers=5:ops=150",
-      "duration_ms": 30.40529999998398,
+      "duration_ms": 49.77640000288375,
       "snapshot_hashes": {
         "P0": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377",
         "P1": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377",
