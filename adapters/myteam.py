@@ -21,7 +21,7 @@ class Engine:
         self.peers[peer_id].execute(query, params)
 
     def sync(self, peer_a: str, peer_b: str):
-        # Two-way sync to simulate full partition healing
+        # Bidirectional sync is required for convergence of Escrow claims
         self.peers[peer_a].sync_with(self.peers[peer_b])
         self.peers[peer_b].sync_with(self.peers[peer_a])
 

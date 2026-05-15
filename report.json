@@ -14,11 +14,11 @@
   "scenarios": [
     {
       "scenario": "reference",
-      "duration_ms": 0.4678000113926828,
+      "duration_ms": 1.794400013750419,
       "snapshot_hashes": {
-        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
       },
       "state_sample": {
         "users": [
@@ -26,6 +26,11 @@
             "id": "u2",
             "email": "bob@x.com",
             "name": "Bob"
+          },
+          {
+            "id": "u3",
+            "email": "alice@x.com (conflict:u3)",
+            "name": "Alice2"
           }
         ],
         "orders": [
@@ -41,17 +46,17 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
         },
         {
           "name": "uniqueness:users.email",
           "passed": true,
-          "detail": "1 live emails, all distinct"
+          "detail": "2 live emails, all distinct"
         },
         {
           "name": "fk:tombstone",
           "passed": true,
-          "detail": "o1={'id': 'o1', 'user_id': 'u1', 'status': 'pending', 'total_cents': 1200}, live_user_ids=['u2']"
+          "detail": "o1={'id': 'o1', 'user_id': 'u1', 'status': 'pending', 'total_cents': 1200}, live_user_ids=['u2', 'u3']"
         },
         {
           "name": "cell-level:u1",
@@ -62,11 +67,11 @@
     },
     {
       "scenario": "chaos:seed=1",
-      "duration_ms": 0.28310000197961926,
+      "duration_ms": 1.5792000049259514,
       "snapshot_hashes": {
-        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
       },
       "state_sample": {
         "users": [
@@ -74,6 +79,11 @@
             "id": "u2",
             "email": "bob@x.com",
             "name": "Bob"
+          },
+          {
+            "id": "u3",
+            "email": "alice@x.com (conflict:u3)",
+            "name": "Alice2"
           }
         ],
         "orders": [
@@ -89,7 +99,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
         },
         {
           "name": "order-invariance",
@@ -100,11 +110,11 @@
     },
     {
       "scenario": "chaos:seed=2",
-      "duration_ms": 0.2572000084910542,
+      "duration_ms": 1.5822999994270504,
       "snapshot_hashes": {
-        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
       },
       "state_sample": {
         "users": [
@@ -112,6 +122,11 @@
             "id": "u2",
             "email": "bob@x.com",
             "name": "Bob"
+          },
+          {
+            "id": "u3",
+            "email": "alice@x.com (conflict:u3)",
+            "name": "Alice2"
           }
         ],
         "orders": [
@@ -127,7 +142,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
         },
         {
           "name": "order-invariance",
@@ -138,11 +153,11 @@
     },
     {
       "scenario": "chaos:seed=3",
-      "duration_ms": 0.24980001035146415,
+      "duration_ms": 1.847000006819144,
       "snapshot_hashes": {
-        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
       },
       "state_sample": {
         "users": [
@@ -150,6 +165,11 @@
             "id": "u2",
             "email": "bob@x.com",
             "name": "Bob"
+          },
+          {
+            "id": "u3",
+            "email": "alice@x.com (conflict:u3)",
+            "name": "Alice2"
           }
         ],
         "orders": [
@@ -165,7 +185,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
         },
         {
           "name": "order-invariance",
@@ -176,11 +196,11 @@
     },
     {
       "scenario": "chaos:seed=5",
-      "duration_ms": 0.2513999934308231,
+      "duration_ms": 1.5582999913021922,
       "snapshot_hashes": {
-        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
       },
       "state_sample": {
         "users": [
@@ -188,6 +208,11 @@
             "id": "u2",
             "email": "bob@x.com",
             "name": "Bob"
+          },
+          {
+            "id": "u3",
+            "email": "alice@x.com (conflict:u3)",
+            "name": "Alice2"
           }
         ],
         "orders": [
@@ -203,7 +228,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
         },
         {
           "name": "order-invariance",
@@ -214,11 +239,11 @@
     },
     {
       "scenario": "chaos:seed=8",
-      "duration_ms": 0.25110002025030553,
+      "duration_ms": 1.5364999999292195,
       "snapshot_hashes": {
-        "A": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "B": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89",
-        "C": "6d874ac83a64c59a241dab2ec880439d6c1dfce0bea73ef36f13225827d9dd89"
+        "A": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "B": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85",
+        "C": "f4974ccf3dd5582193bd00287d7751fdeaf6f459ac6335ab95496009e4e11b85"
       },
       "state_sample": {
         "users": [
@@ -226,6 +251,11 @@
             "id": "u2",
             "email": "bob@x.com",
             "name": "Bob"
+          },
+          {
+            "id": "u3",
+            "email": "alice@x.com (conflict:u3)",
+            "name": "Alice2"
           }
         ],
         "orders": [
@@ -241,7 +271,7 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6d874ac83a64\u2026"
+          "detail": "all peers agree on hash f4974ccf3dd5\u2026"
         },
         {
           "name": "order-invariance",
@@ -252,13 +282,13 @@
     },
     {
       "scenario": "randomized:seed=9999:peers=5:ops=150",
-      "duration_ms": 10.445799998706207,
+      "duration_ms": 83.9525000192225,
       "snapshot_hashes": {
-        "P0": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
-        "P1": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
-        "P2": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
-        "P3": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7",
-        "P4": "73013ffb072ac7d37f4328cd222019bacea5ea7f5145324ed8892896954972d7"
+        "P0": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e",
+        "P1": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e",
+        "P2": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e",
+        "P3": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e",
+        "P4": "06bb7557a167bb9388d7ebf1e5ceb2813bfa2524b0629baba173e17bdf443a6e"
       },
       "state_sample": {
         "users": [
@@ -294,12 +324,12 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 73013ffb072a\u2026"
+          "detail": "all peers agree on hash 06bb7557a167\u2026"
         },
         {
           "name": "uniqueness:users.email",
           "passed": true,
-          "detail": "48 live emails, all distinct"
+          "detail": "54 live emails, all distinct"
         },
         {
           "name": "idempotent-sync",
@@ -310,13 +340,13 @@
     },
     {
       "scenario": "randomized:seed=31415:peers=5:ops=150",
-      "duration_ms": 12.703399988822639,
+      "duration_ms": 71.82020001346245,
       "snapshot_hashes": {
-        "P0": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
-        "P1": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
-        "P2": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
-        "P3": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a",
-        "P4": "62a31212422e7951f49171215b405e1f6eff34eaca279458e3b1dda34d4b160a"
+        "P0": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798",
+        "P1": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798",
+        "P2": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798",
+        "P3": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798",
+        "P4": "dec42a185c98c8003f7b7e46c974e2eb1c3f0b25ca6c00b44369343f81b8a798"
       },
       "state_sample": {
         "users": [
@@ -352,12 +382,12 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 62a31212422e\u2026"
+          "detail": "all peers agree on hash dec42a185c98\u2026"
         },
         {
           "name": "uniqueness:users.email",
           "passed": true,
-          "detail": "55 live emails, all distinct"
+          "detail": "65 live emails, all distinct"
         },
         {
           "name": "idempotent-sync",
@@ -368,13 +398,13 @@
     },
     {
       "scenario": "randomized:seed=27182:peers=5:ops=150",
-      "duration_ms": 9.881900012260303,
+      "duration_ms": 49.11069999798201,
       "snapshot_hashes": {
-        "P0": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
-        "P1": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
-        "P2": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
-        "P3": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a",
-        "P4": "6fa8233ea00138100091c304e9911dda80b31fe09db9fe8a08be040c85e9d03a"
+        "P0": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc",
+        "P1": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc",
+        "P2": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc",
+        "P3": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc",
+        "P4": "a96e9f83590ede57f656ae6e1458b3637af1d1b82f254fde0ef1643a7d9a66fc"
       },
       "state_sample": {
         "users": [
@@ -410,12 +440,12 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 6fa8233ea001\u2026"
+          "detail": "all peers agree on hash a96e9f83590e\u2026"
         },
         {
           "name": "uniqueness:users.email",
           "passed": true,
-          "detail": "57 live emails, all distinct"
+          "detail": "65 live emails, all distinct"
         },
         {
           "name": "idempotent-sync",
@@ -426,13 +456,13 @@
     },
     {
       "scenario": "randomized:seed=16180:peers=5:ops=150",
-      "duration_ms": 13.053899980150163,
+      "duration_ms": 29.029900004388765,
       "snapshot_hashes": {
-        "P0": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
-        "P1": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
-        "P2": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
-        "P3": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46",
-        "P4": "53656b6b0565895ff944a84fce63f3a380457204b36cc93e2eadf62a81f9dc46"
+        "P0": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2",
+        "P1": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2",
+        "P2": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2",
+        "P3": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2",
+        "P4": "9a6df2cb6ac893b1763b660eb0c6dcf1a6dd3c1e74b1fadb5b84e74b06a722b2"
       },
       "state_sample": {
         "users": [
@@ -468,12 +498,12 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 53656b6b0565\u2026"
+          "detail": "all peers agree on hash 9a6df2cb6ac8\u2026"
         },
         {
           "name": "uniqueness:users.email",
           "passed": true,
-          "detail": "51 live emails, all distinct"
+          "detail": "59 live emails, all distinct"
         },
         {
           "name": "idempotent-sync",
@@ -484,13 +514,13 @@
     },
     {
       "scenario": "randomized:seed=11235:peers=5:ops=150",
-      "duration_ms": 11.737399996491149,
+      "duration_ms": 30.40529999998398,
       "snapshot_hashes": {
-        "P0": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
-        "P1": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
-        "P2": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
-        "P3": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d",
-        "P4": "28719ee2b172277a22925bb8b1175874be8b4998dee70334de79a999542e1a5d"
+        "P0": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377",
+        "P1": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377",
+        "P2": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377",
+        "P3": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377",
+        "P4": "f9de21377cb14c8dd599ebbd42114d5305efc0dda3c07319180d2f435d688377"
       },
       "state_sample": {
         "users": [
@@ -526,12 +556,12 @@
         {
           "name": "convergence",
           "passed": true,
-          "detail": "all peers agree on hash 28719ee2b172\u2026"
+          "detail": "all peers agree on hash f9de21377cb1\u2026"
         },
         {
           "name": "uniqueness:users.email",
           "passed": true,
-          "detail": "42 live emails, all distinct"
+          "detail": "45 live emails, all distinct"
         },
         {
           "name": "idempotent-sync",
