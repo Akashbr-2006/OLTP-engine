@@ -1,55 +1,43 @@
 import time
 
 class HLC:
-    def __init__(self, ts: int, count: int, peer_id: str):
-        self.ts = ts
-        self.count = count
-        self.peer_id = peer_id
+    """
+    Hybrid Logical Clock.
+    Guarantees a mathematically absolute order of events in a distributed system.
+    """
+    def __init__(self, ts=0, count=0, node_id="0"):
+        self.ts = ts          
+        self.count = count    
+        self.node_id = str(node_id) 
 
     @classmethod
-    def create_initial(cls, peer_id: str):
-        """Creates the very first clock for a peer."""
-        return cls(int(time.time() * 1000), 0, peer_id)
+    def create_initial(cls, node_id: str):
+        return cls(int(time.time() * 1000), 0, str(node_id))
 
-    def send(self) -> 'HLC':
-        """Call this right BEFORE this peer writes an operation."""
+    def send(self):
+        """Advances the clock for a new local event."""
         now = int(time.time() * 1000)
         if now > self.ts:
             self.ts = now
             self.count = 0
         else:
-            # If events happen in the exact same millisecond, increment the counter
             self.count += 1
-        return HLC(self.ts, self.count, self.peer_id)
+        return HLC(self.ts, self.count, self.node_id)
 
-    def receive(self, remote_hlc_str: str) -> 'HLC':
-        """Call this when receiving an operation from another peer during sync."""
-        remote = HLC.parse(remote_hlc_str)
-        now = int(time.time() * 1000)
+    # --- CRDT Math: Lexicographical Ordering Rules ---
+    def __lt__(self, other: 'HLC') -> bool:
+        if self.ts == other.ts:
+            if self.count == other.count:
+                return self.node_id < other.node_id # Deterministic Tie-breaker
+            return self.count < other.count
+        return self.ts < other.ts
+
+    def __eq__(self, other: 'HLC') -> bool:
+        if not isinstance(other, HLC): return False
+        return self.ts == other.ts and self.count == other.count and self.node_id == other.node_id
+
+    def __gt__(self, other: 'HLC') -> bool:
+        return not (self.__lt__(other) or self.__eq__(other))
         
-        # The new timestamp is the max of (local, remote, physical wall clock)
-        new_ts = max(self.ts, remote.ts, now)
-        
-        if new_ts == self.ts and new_ts == remote.ts:
-            self.count = max(self.count, remote.count) + 1
-        elif new_ts == self.ts:
-            self.count += 1
-        elif new_ts == remote.ts:
-            self.count = remote.count + 1
-        else:
-            self.count = 0
-            
-        self.ts = new_ts
-        return HLC(self.ts, self.count, self.peer_id)
-
-    def pack(self) -> str:
-        """
-        Formats the clock as a string: 'TIMESTAMP-COUNTER-PEERID'
-        Zero-padded so SQLite can sort them perfectly using standard alphabetical sorting.
-        """
-        return f"{self.ts:015d}-{self.count:05d}-{self.peer_id}"
-
-    @classmethod
-    def parse(cls, hlc_str: str) -> 'HLC':
-        parts = hlc_str.split('-')
-        return cls(int(parts[0]), int(parts[1]), parts[2])
+    def __ge__(self, other: 'HLC') -> bool:
+        return not self.__lt__(other)

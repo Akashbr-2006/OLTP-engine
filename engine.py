@@ -1,264 +1,128 @@
-import sqlite3
-from db import CRDTDatabase
-from hlc import HLC
-import re
-import hashlib
 import json
+import hashlib
+import re
+from crdt import LWWRegister, ORSet, EscrowLedger
+from hlc import HLC
 
 class CRDTEngine:
-    def __init__(self, peer_id: str, db_path: str):
-        self.peer_id = peer_id
-        self.db = CRDTDatabase(db_path)
-        
-        # Load the highest clock from the database if it exists, otherwise start fresh
-        self.clock = HLC.create_initial(peer_id)
-        
-    def _update_clock_from_db(self):
-        # We need to make sure our clock is strictly greater than anything in the DB
-        res = self.db.query("SELECT MAX(hlc) as max_hlc FROM crr_log")
-        if res and res[0]['max_hlc']:
-            max_db_clock = HLC.parse(res[0]['max_hlc'])
-            if max_db_clock.ts > self.clock.ts:
-                self.clock.ts = max_db_clock.ts
-                self.clock.count = max_db_clock.count
+    def __init__(self, peer_id, db_path=None):
+        self.peer_id = str(peer_id)
+        self.hlc = HLC.create_initial(self.peer_id)
+        # The Formal Uniqueness Protocol
+        self.escrow = EscrowLedger() 
+        # The Pure CRDT State Machine
+        self.tables = {} 
 
-    def execute(self, sql: str, params: tuple = ()):
-        """
-        This is the Interceptor. We catch the SQL, turn it into CRDT operations, 
-        write to the log, and THEN update the read cache.
-        """
-        sql_upper = sql.upper().strip()
-        
-        if sql_upper.startswith("INSERT INTO"):
-            self._handle_insert(sql, params)
-        elif sql_upper.startswith("UPDATE"):
-            self._handle_update(sql, params)
-        elif sql_upper.startswith("DELETE FROM"):     # <--- ADD THIS
-            self._handle_delete(sql, params)
-        elif sql_upper.startswith("CREATE TABLE") or sql_upper.startswith("CREATE INDEX"):
-            # Schema changes bypass the CRDT log for this hackathon
-            self.db.conn.execute(sql, params)
-            self.db.conn.commit()
-        else:
-            # We'll handle DELETE and SELECT later
-            raise NotImplementedError(f"Operation not yet supported: {sql_upper.split()[0]}")
+    def apply_schema(self, schema_ddl):
+        """Initializes OR-Sets and Cell dictionaries based on the schema."""
+        for stmt in schema_ddl:
+            if stmt.upper().startswith("CREATE TABLE"):
+                match = re.search(r'CREATE TABLE\s+(\w+)', stmt, re.IGNORECASE)
+                if match:
+                    t_name = match.group(1).lower()
+                    # Each table gets an OR-Set for row existence, and a dict for cell LWW-Registers
+                    self.tables[t_name] = {'rows': ORSet(), 'cells': {}}
 
-    def _handle_insert(self, sql: str, params: tuple):
-        # Extremely basic SQL parsing just to get table and values for the hackathon
-        # Example: INSERT INTO users (id, email, name) VALUES (?, ?, ?)
-        table_match = re.search(r"INSERT INTO (\w+)", sql, re.IGNORECASE)
-        table_name = table_match.group(1)
-        
-        cols_match = re.search(r"\((.*?)\)", sql)
-        cols = [c.strip() for c in cols_match.group(1).split(',')]
-        
-        # Assume the first column is ALWAYS the primary key 'id' per the reference schema
-        row_id = params[0] 
-        
-        # 1. Advance our logical clock
-        self._update_clock_from_db()
-        current_hlc = self.clock.send().pack()
-        
-        cursor = self.db.conn.cursor()
-        
-        # 2. Write to the CRDT Op-Log (The TRUE Source of Truth)
-        for i, col_name in enumerate(cols):
-            # Skip the primary key in the cell-level log, it's just the row identity
-            if col_name.lower() == 'id':
-                continue
+    def execute(self, query, params=()):
+        """Translates SQL mutations directly into Lattice Mathematics."""
+        clock = self.hlc.send()
+        q_upper = query.strip().upper()
+
+        if q_upper.startswith("INSERT INTO"):
+            match = re.search(r'INSERT INTO\s+(\w+)\s+\((.*?)\)', q_upper)
+            if not match: return
+            t_name = match.group(1).lower()
+            cols = [c.strip().lower() for c in match.group(2).split(',')]
+            
+            row_id = params[0] # The primary key is always param 0
+            
+            # 1. OR-Set: Add the row identity
+            self.tables[t_name]['rows'].add(row_id, clock)
+            
+            # 2. LWW-Registers: Map the cell values
+            for col, val in zip(cols, params):
+                self.tables[t_name]['cells'][(row_id, col)] = LWWRegister(val, clock)
                 
-            val = str(params[i]) # Store everything as strings in the log
-            
-            cursor.execute("""
-                INSERT OR REPLACE INTO crr_log (table_name, row_id, column_name, value, hlc)
-                VALUES (?, ?, ?, ?, ?)
-            """, (table_name, row_id, col_name, val, current_hlc))
-            
-        # 3. Update the SQLite Read-Cache
-        try:
-            cursor.execute(sql, params)
-        except sqlite3.IntegrityError:
-            # The Chaos test threw a local uniqueness conflict!
-            # We let the CRDT Op-Log keep the history, but we protect the local cache
-            # and prevent the Python script from crashing.
-            pass
-            
-        self.db.conn.commit()
+                # 3. ESCROW PROTOCOL: If inserting an email, reserve it globally!
+                if t_name == "users" and col == "email":
+                    self.escrow.claim(val, row_id, clock) 
 
-    def _handle_update(self, sql: str, params: tuple):
-        # Example: UPDATE users SET name = ? WHERE id = ?
-        table_match = re.search(r"UPDATE (\w+)", sql, re.IGNORECASE)
-        table_name = table_match.group(1)
-        
-        set_match = re.search(r"SET (.*?) WHERE", sql, re.IGNORECASE)
-        col_name = set_match.group(1).split('=')[0].strip()
-        
-        row_id = params[1] # Assume id is the second param
-        new_val = str(params[0])
-        
-        # 1. Advance clock
-        self._update_clock_from_db()
-        current_hlc = self.clock.send().pack()
-        
-        cursor = self.db.conn.cursor()
-        
-        # 2. Write to CRDT Op-Log
-        cursor.execute("""
-            INSERT OR REPLACE INTO crr_log (table_name, row_id, column_name, value, hlc)
-            VALUES (?, ?, ?, ?, ?)
-        """, (table_name, row_id, col_name, new_val, current_hlc))
-        
-        # 3. Update Read-Cache
-        cursor.execute(sql, params)
-        self.db.conn.commit()
-    def _handle_delete(self, sql: str, params: tuple):
-        # Example: DELETE FROM users WHERE id = ?
-        table_match = re.search(r"DELETE FROM (\w+)", sql, re.IGNORECASE)
-        table_name = table_match.group(1)
-        
-        row_id = params[0] # Assume the id is the first param
-        
-        # 1. Advance clock
-        self._update_clock_from_db()
-        current_hlc = self.clock.send().pack()
-        
-        cursor = self.db.conn.cursor()
-        
-        # 2. Write to Tombstones (The CRDT magic)
-        # We record that this row was deleted, and exactly WHEN it was deleted
-        cursor.execute("""
-            INSERT OR REPLACE INTO crr_tombstones (table_name, row_id, deleted_at_hlc)
-            VALUES (?, ?, ?)
-        """, (table_name, row_id, current_hlc))
-        
-        # 3. Update Read-Cache
-        # Since Python's sqlite3 has PRAGMA foreign_keys OFF by default,
-        # deleting this parent will NOT cascade to the children. 
-        # The child order survives!
-        cursor.execute(sql, params)
-        self.db.conn.commit()
+        elif q_upper.startswith("UPDATE"):
+            # BUGFIX: Changed lowercase 'id' to uppercase 'ID' to match q_upper
+            match = re.search(r'UPDATE\s+(\w+)\s+SET\s+(.*?)\s+WHERE\s+ID\s*=\s*\?', q_upper)
+            if not match: return
+            t_name = match.group(1).lower()
+            col = match.group(2).split('=')[0].strip().lower()
+            val = params[0]
+            row_id = params[1]
+            
+            self.tables[t_name]['cells'][(row_id, col)] = LWWRegister(val, clock)
+            if t_name == "users" and col == "email":
+                self.escrow.claim(val, row_id, clock)
+
+        elif q_upper.startswith("DELETE FROM"):
+            match = re.search(r'DELETE FROM\s+(\w+)', q_upper)
+            if not match: return
+            t_name = match.group(1).lower()
+            row_id = params[0]
+            # OR-Set Native Tombstoning
+            self.tables[t_name]['rows'].remove(row_id, clock)
+
     def sync_with(self, other: 'CRDTEngine'):
-        """Bidirectional sync. Both peers walk away with the exact same state."""
-        
-        # 1. Extract all Op-Logs and Tombstones from both peers
-        my_logs = self.db.query("SELECT * FROM crr_log")
-        their_logs = other.db.query("SELECT * FROM crr_log")
-        
-        my_tomb = self.db.query("SELECT * FROM crr_tombstones")
-        their_tomb = other.db.query("SELECT * FROM crr_tombstones")
+        """Peer-to-Peer Merge Function. No central server."""
+        # 1. Sync Clocks
+        if other.hlc.ts > self.hlc.ts or (other.hlc.ts == self.hlc.ts and other.hlc.count > self.hlc.count):
+            self.hlc.ts = other.hlc.ts
+            self.hlc.count = other.hlc.count
+        self.hlc = self.hlc.send()
 
-        # 2. Merge Op-Logs (Highest HLC Wins per cell)
-        merged_logs = {}
-        def merge_log_set(logs):
-            for log in logs:
-                key = (log['table_name'], log['row_id'], log['column_name'])
-                if key not in merged_logs:
-                    merged_logs[key] = dict(log)
+        # 2. Merge Escrow Ledgers
+        self.escrow.merge(other.escrow)
+
+        # 3. Merge Table Lattices
+        for t_name, table_data in other.tables.items():
+            if t_name not in self.tables:
+                self.tables[t_name] = {'rows': ORSet(), 'cells': {}}
+            
+            self.tables[t_name]['rows'].merge(table_data['rows'])
+            
+            for key, reg in table_data['cells'].items():
+                if key not in self.tables[t_name]['cells']:
+                    self.tables[t_name]['cells'][key] = LWWRegister(reg.value, reg.hlc)
                 else:
-                    # CRDT RULE: Highest HLC wins!
-                    if log['hlc'] > merged_logs[key]['hlc']:
-                        merged_logs[key] = dict(log)
+                    self.tables[t_name]['cells'][key].merge(reg)
 
-        merge_log_set(my_logs)
-        merge_log_set(their_logs)
-
-        # 3. Merge Tombstones
-        merged_tombs = {}
-        def merge_tomb_set(tombs):
-            for t in tombs:
-                key = (t['table_name'], t['row_id'])
-                # If it's deleted anywhere, it stays deleted
-                if key not in merged_tombs or t['deleted_at_hlc'] > merged_tombs[key]['deleted_at_hlc']:
-                    merged_tombs[key] = dict(t)
+    def materialize_state(self):
+        """Projects the CRDT math into a clean JSON object for the application layer."""
+        state = {}
+        for t_name, table_data in self.tables.items():
+            state[t_name] = []
+            all_rows = set([k[0] for k in table_data['cells'].keys()])
+            
+            for row_id in sorted(list(all_rows)):
+                # 1. OR-Set Check: Skip if tombstoned
+                if not table_data['rows'].contains(row_id):
+                    continue
                     
-        merge_tomb_set(my_tomb)
-        merge_tomb_set(their_tomb)
+                # Assemble the row
+                row_dict = {}
+                for (r_id, col), reg in table_data['cells'].items():
+                    if r_id == row_id:
+                        row_dict[col] = reg.value
+                        
+                # 2. Escrow Check: Did this row win the email uniqueness reservation?
+                if t_name == "users" and "email" in row_dict:
+                    email = row_dict["email"]
+                    winner_row_id, _ = self.escrow.get_winner(email)
+                    if winner_row_id != row_id:
+                        # This row lost the offline conflict. Drop it from the visible state.
+                        continue 
 
-        # 4. Apply the merged truth to BOTH databases
-        self._apply_merged_state(merged_logs.values(), merged_tombs.values())
-        other._apply_merged_state(merged_logs.values(), merged_tombs.values())
-
-    def _apply_merged_state(self, logs, tombstones):
-        """Wipes the local cache and rebuilds it perfectly from the CRDT logs."""
-        cursor = self.db.conn.cursor()
-        
-        # 1. Wipe everything to guarantee determinism
-        cursor.execute("DELETE FROM users")
-        cursor.execute("DELETE FROM orders")
-        cursor.execute("DELETE FROM crr_log")
-        cursor.execute("DELETE FROM crr_tombstones")
-        cursor.execute("DELETE FROM crr_conflicts")
-        
-        # 2. Restore CRDT Metadata
-        for t in tombstones:
-            cursor.execute("INSERT INTO crr_tombstones VALUES (?, ?, ?)", 
-                           (t['table_name'], t['row_id'], t['deleted_at_hlc']))
-            
-        for l in logs:
-            cursor.execute("INSERT INTO crr_log VALUES (?, ?, ?, ?, ?)", 
-                           (l['table_name'], l['row_id'], l['column_name'], l['value'], l['hlc']))
-            
-        # 3. Rebuild the Read Cache (The tricky part)
-        # Group logs by table and row_id to rebuild the rows
-        rows = {}
-        for l in logs:
-            t_name = l['table_name']
-            r_id = l['row_id']
-            # Skip if this row is tombstoned!
-            if (t_name, r_id) in [(t['table_name'], t['row_id']) for t in tombstones]:
-                continue
-                
-            if t_name not in rows: rows[t_name] = {}
-            if r_id not in rows[t_name]: rows[t_name][r_id] = {'id': r_id}
-            
-            rows[t_name][r_id][l['column_name']] = l['value']
-
-        conflicts_to_save = [] # <--- NEW: Store the losers here
-
-        if 'users' in rows:
-            email_claims = {}
-            for r_id, row_data in list(rows['users'].items()):
-                if 'email' in row_data:
-                    email = row_data['email']
-                    hlc = next(l['hlc'] for l in logs if l['row_id'] == r_id and l['column_name'] == 'email')
-                    
-                    if email not in email_claims:
-                        email_claims[email] = (r_id, hlc)
-                    else:
-                        existing_id, existing_hlc = email_claims[email]
-                        if hlc < existing_hlc:
-                            # The new row won. Drop the existing row and save to conflicts
-                            del rows['users'][existing_id] 
-                            conflicts_to_save.append(('users', 'email', email, existing_id, existing_hlc))
-                            email_claims[email] = (r_id, hlc)
-                        else:
-                            # The new row lost. Drop it and save to conflicts
-                            del rows['users'][r_id] 
-                            conflicts_to_save.append(('users', 'email', email, r_id, hlc))
-
-        # --- NEW: Write the losers to the recovery table ---
-        for c in conflicts_to_save:
-            cursor.execute("INSERT OR REPLACE INTO crr_conflicts VALUES (?, ?, ?, ?, ?)", c)
-
-        # 5. Insert rebuilt rows back into SQLite
-        for r_id, data in rows.get('users', {}).items():
-            if 'email' in data: # basic validation
-                cursor.execute("INSERT INTO users (id, email, name) VALUES (?, ?, ?)", 
-                               (data['id'], data.get('email'), data.get('name')))
-                
-        for r_id, data in rows.get('orders', {}).items():
-            if 'user_id' in data:
-                cursor.execute("INSERT INTO orders (id, user_id, status, total_cents) VALUES (?, ?, ?, ?)", 
-                               (data['id'], data.get('user_id'), data.get('status'), data.get('total_cents', 0)))
-
-        self.db.conn.commit()
+                state[t_name].append(row_dict)
+        return state
 
     def snapshot_hash(self) -> str:
-        """Proves bit-identical determinism for the judges."""
-        # Query all tables, ordered strictly by ID
-        users = [dict(row) for row in self.db.query("SELECT * FROM users ORDER BY id")]
-        orders = [dict(row) for row in self.db.query("SELECT * FROM orders ORDER BY id")]
-        
-        # Serialize to a deterministic JSON string and hash it
-        state = json.dumps({"users": users, "orders": orders}, sort_keys=True)
-        return hashlib.sha256(state.encode('utf-8')).hexdigest()
+        """Generates the bit-identical proof required by the judges."""
+        state = self.materialize_state()
+        state_json = json.dumps(state, sort_keys=True)
+        return hashlib.sha256(state_json.encode('utf-8')).hexdigest()
