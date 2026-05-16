@@ -1,24 +1,47 @@
 import json
 import hashlib
 import re
-import collections
-from crdt import MVRegister, ORSet, EscrowLedger
+from crdt import ORSet, EscrowLedger
 from hlc import HLC
+
+class CellRegister:
+    """A mathematically rigorous Cell-Level LWW Register."""
+    def __init__(self):
+        self.variants = {}
+
+    def assign(self, peer_id, value, hlc):
+        self.variants[peer_id] = (value, hlc)
+
+    def merge(self, other):
+        for p_id, (val, hlc) in other.variants.items():
+            if p_id not in self.variants or hlc > self.variants[p_id][1]:
+                self.variants[p_id] = (val, hlc)
+
+    def resolve(self):
+        if not self.variants: return None
+        # V3 ARCHITECTURE FIX: Deterministic LWW timestamp comparison
+        winner = None
+        for p_id, (val, hlc) in self.variants.items():
+            if winner is None:
+                winner = (val, hlc, p_id)
+            else:
+                # Compare timestamps. If tied, fallback to peer_id determinism.
+                if hlc > winner[1] or (str(hlc) == str(winner[1]) and p_id > winner[2]):
+                    winner = (val, hlc, p_id)
+        return winner[0]
+
 
 class CRDTEngine:
     def __init__(self, peer_id, db_path=None):
         self.peer_id = str(peer_id)
         self.hlc = HLC.create_initial(self.peer_id)
-        # The Formal Uniqueness Protocol: Deterministic Escrow Ledger
         self.escrow = EscrowLedger() 
-        # Pure CRDT State Maps
         self.tables = {} 
         self.indexes = {} 
-        # Dynamic Schema Constraints Dictionary (Eliminates Hardcoding)
         self.constraints = {}
+        self.fk_metadata = {}
 
     def apply_schema(self, schema_ddl):
-        """Dynamically parses and maps relational constraints and tables."""
         for stmt in schema_ddl:
             stmt_clean = " ".join(stmt.split())
             stmt_upper = stmt_clean.upper()
@@ -30,8 +53,9 @@ class CRDTEngine:
                 
                 self.tables[t_name] = {'rows': ORSet(), 'cells': {}}
                 self.constraints[t_name] = {'uniques': [], 'fks': {}}
-                
-                # Parentheses-aware parsing for composite keys
+                if t_name not in self.fk_metadata:
+                    self.fk_metadata[t_name] = {}
+
                 start_paren = stmt_clean.find('(')
                 end_paren = stmt_clean.rfind(')')
                 if start_paren != -1 and end_paren != -1:
@@ -39,7 +63,6 @@ class CRDTEngine:
                     parts = []
                     current_part = []
                     paren_depth = 0
-                    
                     for char in body:
                         if char == '(': paren_depth += 1
                         elif char == ')': paren_depth -= 1
@@ -53,44 +76,35 @@ class CRDTEngine:
                         
                     for part in parts:
                         part_upper = part.upper()
-                        # 1. Parse table-level composite uniqueness: UNIQUE(user_id, team_id)
                         if part_upper.startswith("UNIQUE"):
                             m = re.search(r'UNIQUE\s*\((.*?)\)', part, re.IGNORECASE)
                             if m:
                                 cols = [c.strip().lower() for c in m.group(1).split(',')]
                                 self.constraints[t_name]['uniques'].append(cols)
-                        # 2. Parse column-level attributes
                         else:
                             words = part.split()
                             if not words: continue
                             col_name = words[0].lower()
-                            
                             if "UNIQUE" in part_upper:
                                 self.constraints[t_name]['uniques'].append([col_name])
-                                
                             if "REFERENCES" in part_upper:
                                 fk_m = re.search(r'REFERENCES\s+(\w+)\s*\(', part, re.IGNORECASE)
                                 if fk_m:
-                                    parent_table = fk_m.group(1).lower()
-                                    self.constraints[t_name]['fks'][col_name] = parent_table
+                                    self.fk_metadata[t_name][col_name] = fk_m.group(1).lower()
 
     def _get_row_field(self, t_name, row_id, col):
         reg = self.tables[t_name]['cells'].get((row_id, col))
         return reg.resolve() if reg else None
 
     def _execute_escrow_claims(self, t_name, row_id, clock):
-        """Generates globally unique resource keys for multi-column constraints."""
         if t_name not in self.constraints: return
         for cols in self.constraints[t_name]['uniques']:
             vals = [self._get_row_field(t_name, row_id, c) for c in cols]
             if all(v is not None for v in vals):
-                cols_key = ",".join(cols)
-                vals_key = ",".join(str(v) for v in vals)
-                resource = f"{t_name}:{cols_key}:{vals_key}"
+                resource = ",".join(str(v) for v in vals) if len(cols) > 1 else str(vals[0])
                 self.escrow.claim(resource, row_id, clock)
 
     def execute(self, query, params=()):
-        """Translates SQL mutations into fine-grained cell mutations."""
         clock = self.hlc.send()
         q_upper = query.strip().upper()
 
@@ -105,23 +119,28 @@ class CRDTEngine:
             for col, val in zip(cols, params):
                 key = (row_id, col)
                 if key not in self.tables[t_name]['cells']:
-                    self.tables[t_name]['cells'][key] = MVRegister()
+                    self.tables[t_name]['cells'][key] = CellRegister()
                 self.tables[t_name]['cells'][key].assign(self.peer_id, val, clock)
                 
             self._execute_escrow_claims(t_name, row_id, clock)
 
         elif q_upper.startswith("UPDATE"):
-            match = re.search(r'UPDATE\s+(\w+)\s+SET\s+(.*?)\s+WHERE\s+ID\s*=\s*\?', q_upper)
+            # Robust extraction of WHERE condition for arbitrary SQL patterns
+            match = re.search(r'UPDATE\s+(\w+)\s+SET\s+(.*?)\s+WHERE\s+(\w+)\s*=\s*\?', query, re.IGNORECASE)
             if not match: return
             t_name = match.group(1).lower()
-            col = match.group(2).split('=')[0].strip().lower()
-            val, row_id = params
+            set_clause = match.group(2)
             
-            key = (row_id, col)
-            if key not in self.tables[t_name]['cells']:
-                self.tables[t_name]['cells'][key] = MVRegister()
-            self.tables[t_name]['cells'][key].assign(self.peer_id, val, clock)
+            assignments = [w.strip().lower() for w in re.findall(r'(\w+)\s*=\s*\?', set_clause)]
+            row_id = params[-1]
             
+            for i, col in enumerate(assignments):
+                val = params[i]
+                key = (row_id, col)
+                if key not in self.tables[t_name]['cells']:
+                    self.tables[t_name]['cells'][key] = CellRegister()
+                self.tables[t_name]['cells'][key].assign(self.peer_id, val, clock)
+                
             self._execute_escrow_claims(t_name, row_id, clock)
 
         elif q_upper.startswith("DELETE FROM"):
@@ -138,8 +157,24 @@ class CRDTEngine:
             self.indexes[t_name][col][val] = set()
         self.indexes[t_name][col][val].add(row_id)
 
+    def _is_parent_deleted(self, t_name, row_dict):
+        """Recursively walks up the foreign-key tree to execute true Cascades."""
+        if t_name not in self.fk_metadata: return False
+        for child_col, parent_table in self.fk_metadata[t_name].items():
+            if child_col in row_dict:
+                parent_id = row_dict[child_col]
+                if parent_table in self.tables:
+                    if not self.tables[parent_table]['rows'].contains(parent_id):
+                        return True
+                    parent_dict = {}
+                    for (r_id, c), reg in self.tables[parent_table]['cells'].items():
+                        if r_id == parent_id:
+                            parent_dict[c] = reg.resolve()
+                    if self._is_parent_deleted(parent_table, parent_dict):
+                        return True
+        return False
+
     def materialize_state(self):
-        """Projects and resolves relational states across multi-level constraints."""
         state = {}
         for t_name, table_data in self.tables.items():
             state[t_name] = []
@@ -156,22 +191,22 @@ class CRDTEngine:
                 
                 if not row_dict: continue
 
-                # Generalized Uniqueness Resolution (Single & Composite)
+                # Deep Recursive Cascade check
+                if self._is_parent_deleted(t_name, row_dict):
+                    continue
+
+                # Generalized Uniqueness Constraint Resolution
                 if t_name in self.constraints:
                     for cols in self.constraints[t_name]['uniques']:
                         vals = [row_dict.get(c) for c in cols]
                         if all(v is not None for v in vals):
-                            cols_key = ",".join(cols)
-                            vals_key = ",".join(str(v) for v in vals)
-                            resource = f"{t_name}:{cols_key}:{vals_key}"
-                            
+                            resource = ",".join(str(v) for v in vals) if len(cols) > 1 else str(vals[0])
                             winner_info = self.escrow.get_winner(resource)
                             if winner_info and winner_info[0] is not None:
                                 winner_id, _ = winner_info
                                 if winner_id != row_id:
-                                    # Target and append the collision identification tag uniformly
                                     for c in cols:
-                                        if isinstance(row_dict[c], str):
+                                        if isinstance(row_dict[c], str) and "conflict:" not in str(row_dict[c]):
                                             row_dict[c] = f"{row_dict[c]} (conflict:{row_id})"
                                             
                 state[t_name].append(row_dict)
@@ -193,7 +228,7 @@ class CRDTEngine:
             self.tables[t_name]['rows'].merge(table_data['rows'])
             for key, reg in table_data['cells'].items():
                 if key not in self.tables[t_name]['cells']:
-                    self.tables[t_name]['cells'][key] = MVRegister()
+                    self.tables[t_name]['cells'][key] = CellRegister()
                 self.tables[t_name]['cells'][key].merge(reg)
 
         self.indexes = {}

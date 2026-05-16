@@ -1,11 +1,17 @@
-# Python cache
+
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Benchmark Artifacts
-bench_peer_*.db
-bench_peer_*
-
-# OS Files
 .DS_Store
+Thumbs.db
+
+venv/
+env/
+.venv/
+
+*.json
+!l3_sample.json
+
+.vscode/
+.idea/

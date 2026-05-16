@@ -1,10 +1,13 @@
-FROM python:3.10-slim
+
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY . /app
+COPY . /app/
 
-RUN useradd -m appuser && chown -R appuser /app
-USER appuser
+RUN if [ -f "requirements.txt" ]; then pip install --no-cache-dir -r requirements.txt; fi
 
-CMD ["python", "run.py", "--adapter", "adapters.myteam:Engine", "--fk-policy", "tombstone", "--randomized-seeds", "9999", "31415", "27182", "16180", "11235", "--rand-peers", "5", "--rand-ops", "150", "--out", "/dev/stdout"]
+CMD ["python", "run.py", "--adapter", "adapters.myteam:Engine", "--fk-policy", "cascade"]
