@@ -6,7 +6,7 @@ This engine exposes a standard SQL surface layer (`CREATE TABLE`, `INSERT`, `UPD
 
 ---
 
-## ⚡ Quickstart
+##  Quickstart
 
 Get a green run on a clean environment in under 2 minutes.
 
@@ -25,7 +25,7 @@ python run.py --adapter adapters.myteam:Engine --fk-policy tombstone \
 
 ---
 
-## 📦 Dependencies
+##  Dependencies
 
 This implementation is intentionally minimal. The core engine is written from scratch and does not rely on an external SQL database as authoritative truth.
 
@@ -36,7 +36,7 @@ No external distributed database engines, SQLite servers, or third-party authori
 
 ---
 
-## 🧠 Architectural summary
+##  Architectural summary
 
 ### What this engine is
 
@@ -78,7 +78,7 @@ This design avoids cascading losses under partition and preserves referential st
 
 ---
 
-## 🧩 Project structure
+##  Project structure
 
 ```text
 ├── adapter.py          # Benchmark adapter interface definition
@@ -96,7 +96,7 @@ This design avoids cascading losses under partition and preserves referential st
 
 ---
 
-## ✅ Verification guarantees
+##  Verification guarantees
 
 This repository is validated by the Anvil harness against the benchmark's core invariants:
 
@@ -115,6 +115,6 @@ The current benchmark output confirms:
 
 ---
 
-## 📄 License
+##  License
 
 This repository is released under an open-source license.
